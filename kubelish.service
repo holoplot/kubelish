@@ -1,0 +1,14 @@
+[Unit]
+Description=Kubernetes service discovery daemon
+After=avahi-daemon.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/kubelish --namespace default watch
+Restart=always
+
+# Use the following to override the default configuration
+#Environment=KUBECONFIG=/etc/kubernetes/readonly.conf
+
+[Install]
+WantedBy=multi-user.target
