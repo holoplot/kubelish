@@ -51,17 +51,18 @@ func (w *Watcher) meshDetails(svc *corev1.Service) *ServiceMDNS {
 		service.IPs = append(service.IPs, net.ParseIP(ip))
 	}
 
-	if len(svc.Spec.Ports) != 1 {
-		return nil
-	}
-
 	if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 		for _, ingress := range svc.Status.LoadBalancer.Ingress {
 			service.IPs = append(service.IPs, net.ParseIP(ingress.IP))
 		}
 	}
 
-	service.Port = int(svc.Spec.Ports[0].Port)
+	for _, port := range svc.Spec.Ports {
+		if port.Name == service.Annotations.ServiceName {
+			service.Port = int(port.Port)
+			break
+		}
+	}
 
 	return service
 }
