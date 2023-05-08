@@ -5,6 +5,7 @@ package avahipublisher
 
 import (
 	"fmt"
+	"strings"
 
 	dbus "github.com/godbus/dbus/v5"
 	"github.com/holoplot/go-avahi"
@@ -38,7 +39,9 @@ func (a *AvahiPublisher) Publish(serviceName, serviceType, txt string, port int)
 		txtBytes = [][]byte{[]byte(txt)}
 	}
 
-	if err := eg.AddService(avahi.InterfaceUnspec, avahi.ProtoUnspec, 0, serviceName,
+	localName := strings.Join([]string{serviceName, "on", a.hostnameFqdn}, " ")
+
+	if err := eg.AddService(avahi.InterfaceUnspec, avahi.ProtoUnspec, 0, localName,
 		serviceType, "local", a.hostnameFqdn, uint16(port), txtBytes); err != nil {
 		return nil, fmt.Errorf("AddService() failed: %w", err)
 	}
