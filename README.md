@@ -37,6 +37,28 @@ exposed as an mDNS service.
 If a service is deleted or updated to not be exposed, the daemon will remove
 the mDNS service.
 
+## Kubernetes services with multiple ports
+
+If a service has multiple ports, the port to be exposed as an mDNS service
+has to be annotated with the same name as the mDNS service name, e.g.:
+
+```yaml
+metadata:
+  annotations:
+    kubelish/service-name: Example
+    kubelish/service-type: _example._tcp
+    kubelish/txt: Optional TXT record to be exposed along with the service on mDNS
+    ...
+spec:
+  ...
+  ports:
+  - name: Example
+    nodePort: 10000
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+```
+
 ## Running the daemon
 
 The daemon must be run natively on a node of the cluster, outside of Kubernetes.

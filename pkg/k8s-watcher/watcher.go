@@ -57,11 +57,19 @@ func (w *Watcher) meshDetails(svc *corev1.Service) *ServiceMDNS {
 		}
 	}
 
-	for _, port := range svc.Spec.Ports {
-		if port.Name == service.Annotations.ServiceName {
-			service.Port = int(port.Port)
-			break
+	if len(svc.Spec.Ports) == 1 {
+		service.Port = int(svc.Spec.Ports[0].Port)
+	} else {
+		for _, port := range svc.Spec.Ports {
+			if port.Name == service.Annotations.ServiceName {
+				service.Port = int(port.Port)
+				break
+			}
 		}
+	}
+
+	if service.Port == 0 {
+		return nil
 	}
 
 	return service
