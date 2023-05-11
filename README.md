@@ -30,9 +30,10 @@ metadata:
     kubelish/txt: Optional TXT record to be exposed along with the service on mDNS
 ```
 
-If the service is annotated that way, and one of its external IP addresses is
-a local IP address of the node the daemon is running on, the service will be
-exposed as an mDNS service.
+If the service is annotated that way it will be exposed as an mDNS service.
+
+The hostname of the node will be appended to the service name (e.g. `Example on node.local`)
+to avoid mDNS collisions when the same service is announced by other nodes.
 
 If a service is deleted or updated to not be exposed, the daemon will remove
 the mDNS service.
