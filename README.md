@@ -129,7 +129,6 @@ This project is still in its early stages and has some limitations:
 
 - Only supports Linux
 - Depends on `avahi-daemon` to be installed on the host
-- Only services with a single exposed port are supported
 - Does not support miniKube's way of exposing services with `minikube tunnel`
 
 ## License
