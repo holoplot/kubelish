@@ -78,7 +78,7 @@ The binary supports the following commands:
 - `kubelish add <k8s-service>` - Adds annotations to a service to expose it as an mDNS service and dumps the YAML to stdout
 - `kubelish remove <k8s-service>` - Removes annotations from a service and dumps the YAML to stdout
 
-A systemd service file is [kubelish.service](provided). Make sure you
+A systemd service file is [provided](kubelish.service). Make sure you
 edit the file to set the correct path to the binary and the kubeconfig file.
 
 ### Global flags
