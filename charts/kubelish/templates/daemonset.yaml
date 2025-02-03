@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        name: {{ .Release.Name }}
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      terminationGracePeriodSeconds: 30
+      hostNetwork: true
+      containers:
+      - image: "{{ .Values.image.repository}}:{{ .Values.image.tag }}"
+        command: ["/kubelish"]
+        args: ["--namespace", "default", "watch"]
+        name: {{ .Release.Name }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "100m"
+          limits:
+            memory: "64Mi"
+            cpu: "200m"
+        volumeMounts:
+          - name: dbus
+            mountPath: /var/run/dbus
+          - name: kubeconfig
+            mountPath: /root/.kube/config
+      volumes:
+      - name: dbus
+        hostPath:
+          path: /var/run/dbus
+      - name: kubeconfig
+        hostPath:
+          path: /etc/rancher/k3s/k3s.yaml
