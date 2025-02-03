@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -125,9 +126,15 @@ func (w *Watcher) Close() {
 }
 
 func New(kubeConfigPath, namespace string, serviceType corev1.ServiceType, onUpdate OnUpdateFunc, onDelete OnDeleteFunc) (*Watcher, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	var config *rest.Config
+	var err error
+
+	config, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
-		panic(err)
+		config, err = rest.InClusterConfig()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	clientSet, err := kubernetes.NewForConfig(config)

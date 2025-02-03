@@ -1,0 +1,8 @@
+# image is the image used to manage kubelish
+image:
+  # repository is the path to the repository from which the image should be pulled
+  repository: holoplot/kubelish
+  # tag is the version of the image that should be pulled from the repository
+  tag: sha-26ea187
+  # pullPolicy dictates when an image is pulled when a pod is created, it may be Always, Never, or IfNotPresent
+  pullPolicy: IfNotPresent
