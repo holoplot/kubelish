@@ -37,12 +37,7 @@ spec:
         volumeMounts:
           - name: dbus
             mountPath: /var/run/dbus
-          - name: kubeconfig
-            mountPath: /root/.kube/config
       volumes:
       - name: dbus
         hostPath:
           path: /var/run/dbus
-      - name: kubeconfig
-        hostPath:
-          path: /etc/rancher/k3s/k3s.yaml

@@ -129,13 +129,9 @@ func New(kubeConfigPath, namespace string, serviceType corev1.ServiceType, onUpd
 	var config *rest.Config
 	var err error
 
-	if kubeConfigPath == "" {
+	config, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	if err != nil {
 		config, err = rest.InClusterConfig()
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 		if err != nil {
 			panic(err)
 		}
