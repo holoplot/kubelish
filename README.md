@@ -131,6 +131,14 @@ This project is still in its early stages and has some limitations:
 - Depends on `avahi-daemon` to be installed on the host
 - Does not support miniKube's way of exposing services with `minikube tunnel`
 
+## Releasing
+
+To make a new release run `release.sh` with the version number you would like
+to release e.g. `./release.sh 4.3.2`. This will make the required changes to
+the helm chart. When this change is merged into the `main` branch GitHub
+workflows will create a release and publish the container image and helm chart
+with the appropriate release tags.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
