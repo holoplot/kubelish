@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  kubelish:
+  - apiVersion: v1
+    appVersion: 4.0.1
+    created: "2025-02-03T17:49:45.484066895Z"
+    description: mDNS service publisher for Kubernetes cluster nodes
+    digest: 3c741dde1c638033eda735cdd9ba540eafeec66cdd95817fafa42dc8bbeeddb3
+    name: kubelish
+    urls:
+    - https://github.com/holoplot/kubelish/releases/download/kubelish-0.0.1/kubelish-0.0.1.tgz
+    version: 0.0.1
+generated: "2025-02-03T17:49:45.484078277Z"
