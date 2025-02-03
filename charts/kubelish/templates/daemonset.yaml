@@ -21,6 +21,7 @@ spec:
         effect: NoSchedule
       terminationGracePeriodSeconds: 30
       hostNetwork: true
+      serviceAccountName: {{ .Release.Name }}
       containers:
       - image: "{{ .Values.image.repository}}:{{ .Values.image.tag }}"
         command: ["/kubelish"]
