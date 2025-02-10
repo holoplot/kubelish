@@ -23,7 +23,7 @@ spec:
       hostNetwork: true
       serviceAccountName: {{ .Release.Name }}
       containers:
-      - image: "{{ .Values.image.repository}}:{{ .Values.image.tag }}"
+      - image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
         command: ["/kubelish"]
         args: ["--namespace", "default", "watch"]
         name: {{ .Release.Name }}
