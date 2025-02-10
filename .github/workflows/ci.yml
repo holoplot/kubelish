@@ -1,7 +1,7 @@
-# This workflow will build a golang project
+# This workflow will build kubelish and publish its helm chart
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
+name: ci
 
 on:
   push:
@@ -59,4 +59,45 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         platforms: linux/amd64,linux/arm64
 
-        
+  release_helm:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      new: ${{ steps.releaser.changed_charts != '' }}
+      chart_version: ${{ steps.releaser.chart_version }}
+    steps:
+    - name: Configure Git
+      run: |
+        git config user.name "$GITHUB_ACTOR"
+        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+    - name: Run chart-releaser
+      id: releaser
+      uses: helm/chart-releaser-action@v1.6.0
+      env:
+        CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}"
+
+  release_docker:
+    runs-on: ubuntu-latest
+    needs: release_helm
+    if: needs.release_helm.outputs.new
+    steps:
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/kubelish:${{ needs.release_helm.outputs.chart_version }}
+        platforms: linux/amd64,linux/arm64
