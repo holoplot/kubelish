@@ -80,7 +80,7 @@ jobs:
 
     - name: Run chart-releaser
       id: releaser
-      uses: helm/chart-releaser-action@v1.6.0
+      uses: helm/chart-releaser-action@v1.7.0
       with:
         skip_existing: true
       env:
