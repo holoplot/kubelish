@@ -9,7 +9,7 @@ require (
 	github.com/holoplot/go-avahi v1.0.1
 	github.com/mattn/go-colorable v0.1.14
 	github.com/okzk/sdnotify v0.0.0-20240725214427-1c1fdd37c5ac
-	github.com/rs/zerolog v1.33.0
+	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cobra v1.8.1
 	k8s.io/api v0.32.1
 	k8s.io/apimachinery v0.32.1
