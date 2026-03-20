@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"log/slog"
+	"os"
 	"time"
 
 	watcher "github.com/holoplot/kubelish/pkg/k8s-watcher"
 	"github.com/holoplot/kubelish/pkg/publisher"
 	avahi "github.com/holoplot/kubelish/pkg/publisher/avahi"
 	"github.com/okzk/sdnotify"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -26,10 +27,12 @@ func doWatch(cmd *cobra.Command, args []string) {
 		var err error
 		pub, err = avahi.New()
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to create Avahi publisher")
+			slog.Error("Failed to create Avahi publisher", "error", err)
+			os.Exit(1)
 		}
 	default:
-		log.Fatal().Str("publisher", publisherImpl).Msg("Unknown publisher")
+		slog.Error("Unknown publisher", "publisher", publisherImpl)
+		os.Exit(1)
 	}
 
 	publishedServices := make(map[string]publisher.PublishedService)
@@ -44,42 +47,39 @@ func doWatch(cmd *cobra.Command, args []string) {
 		}
 
 		if m == nil {
-			log.Info().
-				Str("name", svc.Name).
-				Str("namespace", svc.Namespace).
-				Str("id", string(svc.UID)).
-				Msg("Service unpublished")
+			slog.Info("Service unpublished",
+				"name", svc.Name,
+				"namespace", svc.Namespace,
+				"id", string(svc.UID))
 
 			return
 		}
 
 		an := m.Annotations
 		if an == nil {
-			log.Debug().
-				Str("name", svc.Name).
-				Str("namespace", svc.Namespace).
-				Str("id", string(svc.UID)).
-				Msg("No annotations found for service")
+			slog.Debug("No annotations found for service",
+				"name", svc.Name,
+				"namespace", svc.Namespace,
+				"id", string(svc.UID))
 
 			return
 		}
 
 		ps, err := pub.Publish(an.ServiceName, an.ServiceType, an.Txt, m.Port)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to publish service")
+			slog.Error("Failed to publish service", "error", err)
 			return
 		}
 
 		publishedServices[string(svc.UID)] = ps
 
-		log.Info().
-			Str("name", svc.Name).
-			Str("namespace", svc.Namespace).
-			Str("mdns-name", an.ServiceName).
-			Str("mdns-type", an.ServiceType).
-			Str("txt", an.Txt).
-			Str("id", string(svc.UID)).
-			Msg("Service updated")
+		slog.Info("Service updated",
+			"name", svc.Name,
+			"namespace", svc.Namespace,
+			"mdns-name", an.ServiceName,
+			"mdns-type", an.ServiceType,
+			"txt", an.Txt,
+			"id", string(svc.UID))
 	}
 
 	deleteService := func(svc *corev1.Service, m *watcher.ServiceMDNS) {
@@ -87,24 +87,21 @@ func doWatch(cmd *cobra.Command, args []string) {
 			ps.Close()
 		}
 
-		log.Info().
-			Str("name", svc.Name).
-			Str("namespace", svc.Namespace).
-			Str("mdns-name", m.Annotations.ServiceName).
-			Str("mdns-type", m.Annotations.ServiceType).
-			Str("id", string(svc.UID)).
-			Msg("Service deleted")
+		slog.Info("Service deleted",
+			"name", svc.Name,
+			"namespace", svc.Namespace,
+			"mdns-name", m.Annotations.ServiceName,
+			"mdns-type", m.Annotations.ServiceType,
+			"id", string(svc.UID))
 	}
 
 	w, err := watcher.New(kubeConfig, namespace, corev1.ServiceTypeLoadBalancer, updateService, deleteService)
 	if err != nil {
-		log.Fatal().
-			Err(err).
-			Str("namespace", namespace).
-			Msg("Failed to create watcher")
+		slog.Error("Failed to create watcher", "error", err, "namespace", namespace)
+		os.Exit(1)
 	}
 
-	log.Info().Msg("Watching for annotated Kubernetes services")
+	slog.Info("Watching for annotated Kubernetes services")
 
 	sdnotify.Ready()
 

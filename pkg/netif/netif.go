@@ -1,9 +1,9 @@
 package netif
 
 import (
+	"log/slog"
 	"net"
-
-	"github.com/rs/zerolog/log"
+	"os"
 )
 
 type NetworkInterfaces []net.Interface
@@ -32,7 +32,8 @@ func Get(list []string) NetworkInterfaces {
 	if len(list) == 0 {
 		ret, err := net.Interfaces()
 		if err != nil {
-			log.Fatal().Err(err).Msg("Unable to get interfaces")
+			slog.Error("Unable to get interfaces", "error", err)
+			os.Exit(1)
 		}
 
 		return ret
@@ -43,10 +44,7 @@ func Get(list []string) NetworkInterfaces {
 	for _, name := range list {
 		iface, err := net.InterfaceByName(name)
 		if err != nil {
-			log.Warn().
-				Err(err).
-				Str("name", name).
-				Msg("Failed to get interface, skipping")
+			slog.Warn("Failed to get interface, skipping", "error", err, "name", name)
 		} else {
 			ret = append(ret, *iface)
 		}

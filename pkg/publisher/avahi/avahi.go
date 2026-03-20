@@ -5,12 +5,12 @@ package avahipublisher
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	dbus "github.com/godbus/dbus/v5"
 	"github.com/holoplot/go-avahi"
 	"github.com/holoplot/kubelish/pkg/publisher"
-	"github.com/rs/zerolog/log"
 )
 
 type AvahiPublisher struct {
@@ -69,7 +69,7 @@ func New() (*AvahiPublisher, error) {
 		return nil, fmt.Errorf("GetHostNameFqdn() failed: %w", err)
 	}
 
-	log.Info().Str("hostname", hostname).Msg("Starting Avahi publisher")
+	slog.Info("Starting Avahi publisher", "hostname", hostname)
 
 	return &AvahiPublisher{
 		avahiServer:  avahiServer,

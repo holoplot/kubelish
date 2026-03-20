@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"log/slog"
+	"os"
+
 	"github.com/holoplot/kubelish/pkg/meta"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -19,31 +21,37 @@ func doAdd(cmd *cobra.Command, args []string) {
 	kubeConfig := getKubeConfig()
 
 	if len(args) != 1 {
-		log.Fatal().Msg("You must specify a k8s service name")
+		slog.Error("You must specify a k8s service name")
+		os.Exit(1)
 	}
 
 	if serviceName == "" {
-		log.Fatal().Msg("You must specify an mDNS service name")
+		slog.Error("You must specify an mDNS service name")
+		os.Exit(1)
 	}
 
 	if serviceType == "" {
-		log.Fatal().Msg("You must specify an mDNS service type")
+		slog.Error("You must specify an mDNS service type")
+		os.Exit(1)
 	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to build config from flags")
+		slog.Error("Failed to build config from flags", "error", err)
+		os.Exit(1)
 	}
 
 	clientSet, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create clientset")
+		slog.Error("Failed to create clientset", "error", err)
+		os.Exit(1)
 	}
 
 	svc, err := clientSet.CoreV1().Services(namespace).Get(cmd.Context(), args[0], metav1.GetOptions{})
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get service")
+		slog.Error("Failed to get service", "error", err)
+		os.Exit(1)
 	}
 
 	an := meta.Annotations{

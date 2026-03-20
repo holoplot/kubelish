@@ -1,7 +1,9 @@
 package cmd
 
 import (
-	"github.com/rs/zerolog/log"
+	"log/slog"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +30,7 @@ func Execute() {
 	rootCmd.AddCommand(watchCmd())
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal().Err(err).Msg("Failed to execute root command")
+		slog.Error("Failed to execute root command", "error", err)
+		os.Exit(1)
 	}
 }
