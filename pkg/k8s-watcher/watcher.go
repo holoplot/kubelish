@@ -103,19 +103,19 @@ func (w *Watcher) deleteService(svc *corev1.Service) {
 	}
 }
 
-func (w *Watcher) addHandler(obj interface{}) {
+func (w *Watcher) addHandler(obj any) {
 	if svc, ok := obj.(*corev1.Service); ok {
 		w.updateService(svc)
 	}
 }
 
-func (w *Watcher) updateHandler(oldObj, newObj interface{}) {
+func (w *Watcher) updateHandler(oldObj, newObj any) {
 	if svc, ok := newObj.(*corev1.Service); ok {
 		w.updateService(svc)
 	}
 }
 
-func (w *Watcher) deleteHandler(obj interface{}) {
+func (w *Watcher) deleteHandler(obj any) {
 	if svc, ok := obj.(*corev1.Service); ok {
 		w.deleteService(svc)
 	}
