@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"reflect"
 	"sync"
@@ -66,6 +67,13 @@ func (w *Watcher) meshDetails(svc *corev1.Service) *ServiceMDNS {
 				service.Port = int(port.Port)
 				break
 			}
+		}
+
+		if service.Port == 0 {
+			slog.Warn("Service has multiple ports but none is named like the service",
+				"namespace", svc.Namespace,
+				"service", svc.Name,
+				"serviceName", service.Annotations.ServiceName)
 		}
 	}
 
