@@ -26,7 +26,28 @@ func (p *PublishedAvahiService) Close() {
 	p.publisher.avahiServer.EntryGroupFree(p.entryGroup)
 }
 
-func (a *AvahiPublisher) Publish(serviceName, serviceType, txt string, port int) (publisher.PublishedService, error) {
+// avahiProtocol maps a protocol mask onto the single protocol value that
+// AddService() expects. Avahi's protocol argument is an enum, not a bit
+// mask, so announcing on both protocols means leaving it unspecified.
+func avahiProtocol(protocols publisher.Protocol) (int32, error) {
+	switch protocols {
+	case publisher.ProtocolIPv4:
+		return avahi.ProtoInet, nil
+	case publisher.ProtocolIPv6:
+		return avahi.ProtoInet6, nil
+	case publisher.ProtocolIPv4 | publisher.ProtocolIPv6:
+		return avahi.ProtoUnspec, nil
+	default:
+		return 0, fmt.Errorf("no protocol to announce on")
+	}
+}
+
+func (a *AvahiPublisher) Publish(serviceName, serviceType, txt string, protocols publisher.Protocol, port int) (publisher.PublishedService, error) {
+	protocol, err := avahiProtocol(protocols)
+	if err != nil {
+		return nil, err
+	}
+
 	eg, err := a.avahiServer.EntryGroupNew()
 	if err != nil {
 		return nil, fmt.Errorf("EntryGroupNew() failed: %w", err)
@@ -40,7 +61,7 @@ func (a *AvahiPublisher) Publish(serviceName, serviceType, txt string, port int)
 
 	localName := strings.Join([]string{serviceName, "on", a.hostnameFqdn}, " ")
 
-	if err := eg.AddService(avahi.InterfaceUnspec, avahi.ProtoUnspec, 0, localName,
+	if err := eg.AddService(avahi.InterfaceUnspec, protocol, 0, localName,
 		serviceType, "local", a.hostnameFqdn, uint16(port), txtBytes); err != nil {
 		return nil, fmt.Errorf("AddService() failed: %w", err)
 	}

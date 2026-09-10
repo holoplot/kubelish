@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -13,10 +14,52 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const (
+	// protocolModeAuto announces each service on the protocols the cluster
+	// actually serves it on. The other modes force a fixed set.
+	protocolModeAuto = "auto"
+	protocolModeIPv4 = "ipv4"
+	protocolModeIPv6 = "ipv6"
+	protocolModeBoth = "both"
+)
+
 var (
 	interfaces    []string
 	publisherImpl string
+	protocolMode  string
 )
+
+// resolveProtocols determines the protocols a single service is announced on.
+func resolveProtocols(mode string, m *watcher.ServiceMDNS) (publisher.Protocol, error) {
+	both := publisher.ProtocolIPv4 | publisher.ProtocolIPv6
+
+	switch mode {
+	case protocolModeIPv4:
+		return publisher.ProtocolIPv4, nil
+	case protocolModeIPv6:
+		return publisher.ProtocolIPv6, nil
+	case protocolModeBoth:
+		return both, nil
+	case protocolModeAuto:
+		var protocols publisher.Protocol
+
+		if m.HasIPv4 {
+			protocols |= publisher.ProtocolIPv4
+		}
+
+		if m.HasIPv6 {
+			protocols |= publisher.ProtocolIPv6
+		}
+
+		if protocols == 0 {
+			return both, nil
+		}
+
+		return protocols, nil
+	}
+
+	return 0, fmt.Errorf("unknown protocol mode %q", mode)
+}
 
 func doWatch(cmd *cobra.Command, args []string) {
 	kubeConfig := getKubeConfig()
@@ -65,7 +108,13 @@ func doWatch(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		ps, err := pub.Publish(an.ServiceName, an.ServiceType, an.Txt, m.Port)
+		protocols, err := resolveProtocols(protocolMode, m)
+		if err != nil {
+			slog.Error("Failed to determine protocols for service", "error", err)
+			return
+		}
+
+		ps, err := pub.Publish(an.ServiceName, an.ServiceType, an.Txt, protocols, m.Port)
 		if err != nil {
 			slog.Error("Failed to publish service", "error", err)
 			return
@@ -79,6 +128,7 @@ func doWatch(cmd *cobra.Command, args []string) {
 			"mdns-name", an.ServiceName,
 			"mdns-type", an.ServiceType,
 			"txt", an.Txt,
+			"protocols", protocols.String(),
 			"id", string(svc.UID))
 	}
 
@@ -117,12 +167,20 @@ func watchCmd() *cobra.Command {
 		Run:   doWatch,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			setupLogger()
+
+			if _, err := resolveProtocols(protocolMode, &watcher.ServiceMDNS{}); err != nil {
+				slog.Error("Invalid protocol mode", "error", err,
+					"valid", []string{protocolModeAuto, protocolModeIPv4, protocolModeIPv6, protocolModeBoth})
+				os.Exit(1)
+			}
 		},
 	}
 
 	cmd.Flags().StringArrayP("interface", "i", interfaces,
 		"Network interface to publish services on (can be specified multiple times) (default: all interfaces)")
 	cmd.Flags().StringVarP(&publisherImpl, "publisher", "p", "avahi", "mDNS Publisher to use")
+	cmd.Flags().StringVar(&protocolMode, "protocols", protocolModeAuto,
+		"Protocols to announce services on: auto (follow the protocols the cluster serves each service on), ipv4, ipv6 or both")
 
 	return cmd
 }

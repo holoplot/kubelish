@@ -86,6 +86,16 @@ edit the file to set the correct path to the binary and the kubeconfig file.
 The following flags can be used with all commands:
 * `--namespace` - Namespace to watch for services. Defaults to `default`.
 
+### `watch` flags
+
+* `--publisher` - mDNS publisher to use. Defaults to `avahi`.
+* `--protocols` - Protocols to announce services on. Defaults to `auto`, which
+  announces each service on the protocols the cluster actually serves it on:
+  the address families of its load balancer and external IP addresses, falling
+  back to the service's `spec.ipFamilies` when it has no addresses yet. That
+  way an IPv6 record is only published for a service the cluster reaches over
+  IPv6. Use `ipv4`, `ipv6` or `both` to override the detection.
+
 ### Environment variables
 
 The environment variables below can be used to configure the daemon:

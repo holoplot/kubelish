@@ -30,11 +30,29 @@ type Watcher struct {
 type ServiceMDNS struct {
 	Annotations *meta.Annotations
 	IPs         []net.IP
+	HasIPv4     bool
+	HasIPv6     bool
 	Port        int
 }
 
 type OnUpdateFunc func(*corev1.Service, *ServiceMDNS)
 type OnDeleteFunc func(*corev1.Service, *ServiceMDNS)
+
+// addIP records an address and the protocol it belongs to. Unparsable
+// addresses are ignored.
+func (s *ServiceMDNS) addIP(ip net.IP) {
+	if ip == nil {
+		return
+	}
+
+	if ip.To4() != nil {
+		s.HasIPv4 = true
+	} else {
+		s.HasIPv6 = true
+	}
+
+	s.IPs = append(s.IPs, ip)
+}
 
 func (w *Watcher) meshDetails(svc *corev1.Service) *ServiceMDNS {
 	if svc.Spec.Type != corev1.ServiceType(w.serviceType) {
@@ -50,13 +68,39 @@ func (w *Watcher) meshDetails(svc *corev1.Service) *ServiceMDNS {
 	service.IPs = make([]net.IP, 0)
 
 	for _, ip := range svc.Spec.ExternalIPs {
-		service.IPs = append(service.IPs, net.ParseIP(ip))
+		service.addIP(net.ParseIP(ip))
 	}
 
 	if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 		for _, ingress := range svc.Status.LoadBalancer.Ingress {
-			service.IPs = append(service.IPs, net.ParseIP(ingress.IP))
+			// Ingress entries that only carry a host name have no IP.
+			service.addIP(net.ParseIP(ingress.IP))
 		}
+	}
+
+	// Without any usable address, fall back to the families the cluster
+	// assigned to the service. Those follow the service CIDRs, so an IPv6
+	// entry proves the cluster serves IPv6.
+	if !service.HasIPv4 && !service.HasIPv6 {
+		for _, family := range svc.Spec.IPFamilies {
+			switch family {
+			case corev1.IPv4Protocol:
+				service.HasIPv4 = true
+			case corev1.IPv6Protocol:
+				service.HasIPv6 = true
+			}
+		}
+	}
+
+	// Still nothing known about the service: assume both protocols rather
+	// than announcing nothing at all.
+	if !service.HasIPv4 && !service.HasIPv6 {
+		slog.Debug("Service has no addresses and no IP families, assuming both protocols",
+			"namespace", svc.Namespace,
+			"service", svc.Name)
+
+		service.HasIPv4 = true
+		service.HasIPv6 = true
 	}
 
 	if len(svc.Spec.Ports) == 1 {
