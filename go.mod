@@ -7,7 +7,7 @@ toolchain go1.27.1
 require (
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/holoplot/go-avahi v1.1.0
-	github.com/lmittmann/tint v1.2.0
+	github.com/lmittmann/tint v1.2.1
 	github.com/mattn/go-isatty v0.0.24
 	github.com/okzk/sdnotify v0.0.0-20240725214427-1c1fdd37c5ac
 	github.com/spf13/cobra v1.10.2
