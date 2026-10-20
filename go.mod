@@ -2,7 +2,7 @@ module github.com/holoplot/kubelish
 
 go 1.27.0
 
-toolchain go1.27.1
+toolchain go1.27.3
 
 require (
 	github.com/godbus/dbus/v5 v5.2.2
